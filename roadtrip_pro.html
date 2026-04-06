@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TX–NM Loop · Family Road Trip 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root {
+  --bg:#FDFAF4; --bg2:#F5EFE0; --bg3:#EDE5D0;
+  --card:#FFFFFF; --text:#1A1410; --text-mid:#3D3228; --text-soft:#6B5B4E;
+  --border:rgba(26,20,16,0.1); --border-md:rgba(26,20,16,0.18);
+  --terra:#C4623A; --terra-l:#E07A52;
+  --sage:#6B8C6E; --sage-l:#8FAE92;
+  --sky:#4A7FA5; --sky-l:#7AAEC8;
+  --amber:#B07C20; --amber-l:#D4A030;
+  --shadow:rgba(26,20,16,0.07); --shadow-md:rgba(26,20,16,0.14);
+  --hero-bg:#1A1410;
+  --radius:12px; --radius-lg:16px;
+}
+[data-theme="dark"] {
+  --bg:#1A1410; --bg2:#231D16; --bg3:#2E2620;
+  --card:#2A231C; --text:#F0E8D8; --text-mid:#D4C8B4; --text-soft:#9A8A7A;
+  --border:rgba(240,232,216,0.1); --border-md:rgba(240,232,216,0.18);
+  --terra:#E07A52; --terra-l:#F0956E;
+  --sage:#8FAE92; --sage-l:#AECBB0;
+  --sky:#7AAEC8; --sky-l:#9CC4D8;
+  --amber:#D4A030; --amber-l:#E8C060;
+  --shadow:rgba(0,0,0,0.3); --shadow-md:rgba(0,0,0,0.45);
+  --hero-bg:#0F0C09;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s;font-size:15px;line-height:1.6;}
+a{color:var(--sky);}
+button{cursor:pointer;font-family:'DM Sans',sans-serif;}
+input,select{font-family:'DM Sans',sans-serif;}
+
+/* ── HERO ── */
+.hero{background:var(--hero-bg);color:#F5EFE0;padding:3.5rem 2rem 2.5rem;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 55% at 50% 110%,rgba(196,98,58,0.38) 0%,transparent 68%);pointer-events:none;}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;max-width:900px;margin:0 auto 1.5rem;position:relative;}
+.hero-eyebrow{font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#E07A52;margin-bottom:.8rem;}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(2rem,5.5vw,3.6rem);font-weight:700;line-height:1.1;color:#F5EFE0;margin-bottom:.5rem;}
+.hero-title em{font-style:italic;color:#E07A52;}
+.hero-subtitle{font-size:14px;color:#8a7a6a;font-weight:300;margin-bottom:1.8rem;}
+.hero-stats{display:flex;gap:1.6rem;flex-wrap:wrap;justify-content:center;margin-bottom:1.8rem;}
+.hero-stat-val{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:700;color:#F5EFE0;display:block;}
+.hero-stat-label{font-size:11px;color:#7a6a5a;text-transform:uppercase;letter-spacing:.12em;}
+.hero-divider{width:1px;height:36px;background:#2e2820;align-self:center;}
+/* Countdown */
+.countdown{display:inline-flex;gap:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 20px;margin-bottom:0;}
+.cd-unit{text-align:center;}
+.cd-num{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:#F5EFE0;display:block;min-width:44px;}
+.cd-label{font-size:10px;color:#6a5a4a;text-transform:uppercase;letter-spacing:.1em;}
+.cd-sep{font-family:'Playfair Display',serif;font-size:1.4rem;color:#3a3028;align-self:center;padding-bottom:8px;}
+.cd-done{font-size:14px;color:#8FAE92;padding:8px 16px;}
+/* Dark mode toggle */
+.dm-toggle{position:absolute;top:0;right:0;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:500;color:#c0b09a;transition:background .2s;}
+.dm-toggle:hover{background:rgba(255,255,255,0.12);}
+
+/* ── ROUTE BAR ── */
+.route-bar{background:var(--bg2);padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+.route-stop{font-size:12px;font-weight:500;padding:4px 11px;border-radius:18px;background:var(--card);color:var(--text-mid);border:1px solid var(--border);white-space:nowrap;}
+.route-stop.home{background:var(--terra);color:#fff;border-color:var(--terra);}
+.route-arrow{color:var(--text-soft);font-size:12px;}
+
+/* ── MAIN LAYOUT ── */
+.outer{max-width:1120px;margin:0 auto;padding:2rem 1.25rem 4rem;}
+
+/* ── MAIN TABS ── */
+.main-tabs{display:flex;gap:4px;margin-bottom:2rem;border-bottom:1.5px solid var(--border);padding-bottom:0;}
+.main-tab-btn{padding:10px 22px;font-size:14px;font-weight:500;background:transparent;border:none;color:var(--text-soft);position:relative;transition:color .2s;border-bottom:2px solid transparent;margin-bottom:-1.5px;}
+.main-tab-btn:hover{color:var(--text);}
+.main-tab-btn.active{color:var(--terra);border-bottom-color:var(--terra);}
+.main-tab-panel{display:none;}
+.main-tab-panel.active{display:block;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── DAY NAV ── */
+.day-nav{display:flex;gap:6px;margin-bottom:1.8rem;flex-wrap:wrap;}
+.day-btn{padding:7px 16px;border-radius:28px;font-size:13px;font-weight:500;border:1.5px solid var(--border-md);background:transparent;color:var(--text-soft);transition:all .2s;}
+.day-btn:hover{border-color:var(--terra);color:var(--terra);}
+.day-btn.active{background:var(--terra);border-color:var(--terra);color:#fff;}
+
+/* ── DAY CARDS ── */
+.day-card{background:var(--card);border-radius:var(--radius-lg);box-shadow:0 2px 12px var(--shadow);margin-bottom:1.8rem;overflow:hidden;animation:fadeUp .35s ease both;border:1px solid var(--border);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.day-card.hidden{display:none;}
+.day-card-header{display:flex;align-items:center;gap:14px;padding:1.1rem 1.4rem;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.day-number{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;color:var(--terra);line-height:1;min-width:44px;}
+.day-name{font-size:15px;font-weight:500;color:var(--text);}
+.day-route-text{font-size:12px;color:var(--text-soft);margin-top:2px;}
+.day-badge{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.badge{font-size:11px;font-weight:500;padding:3px 10px;border-radius:10px;white-space:nowrap;}
+.badge-drive{background:rgba(74,127,165,0.12);color:var(--sky);}
+.badge-new{background:rgba(196,98,58,0.12);color:var(--terra);}
+.badge-revised{background:rgba(176,124,32,0.12);color:var(--amber);}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+thead th{background:var(--bg2);padding:9px 13px;text-align:left;font-size:10.5px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:var(--text-soft);border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:hover{background:var(--bg2);}
+tbody tr:last-child{border-bottom:none;}
+td{padding:13px 13px;vertical-align:top;line-height:1.55;color:var(--text);}
+td.td-time{width:110px;white-space:nowrap;}
+td.td-loc{width:190px;min-width:155px;}
+td.td-drive{width:120px;}
+td.td-veg{min-width:175px;}
+td.td-cost{width:135px;}
+.time-pill{display:inline-block;font-size:11px;font-weight:500;padding:3px 9px;border-radius:9px;margin-bottom:3px;}
+.tp-morning{background:rgba(176,124,32,0.12);color:var(--amber);}
+.tp-afternoon{background:rgba(74,127,165,0.12);color:var(--sky);}
+.tp-evening{background:rgba(107,140,110,0.12);color:var(--sage);}
+.loc-name{font-weight:500;color:var(--text);}
+.loc-sub{font-size:12px;color:var(--text-soft);margin-top:2px;}
+.drive-chip{display:inline-block;font-size:11.5px;background:var(--bg2);border:1px solid var(--border);color:var(--text-soft);padding:3px 8px;border-radius:7px;white-space:nowrap;}
+.veg-name{font-weight:500;font-size:13px;color:var(--sage);}
+.veg-note{font-size:12px;color:var(--text-soft);margin-top:2px;}
+.cost-main{font-weight:500;font-size:13px;color:var(--text);}
+.cost-sub{font-size:11.5px;color:var(--text-soft);margin-top:2px;}
+
+/* ── BUDGET ── */
+.budget-section{background:var(--hero-bg);border-radius:var(--radius-lg);padding:2rem;margin-top:2.5rem;color:#F5EFE0;}
+.budget-title{font-family:'Playfair Display',serif;font-size:1.35rem;color:#F5EFE0;margin-bottom:1.4rem;}
+.budget-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:0;}
+.budget-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:13px;}
+.budget-card.total{background:var(--terra);border-color:var(--terra);grid-column:span 2;}
+.budget-label{font-size:10.5px;color:#7a6a5a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;}
+.budget-card.total .budget-label{color:rgba(255,255,255,0.65);}
+.budget-val{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:#F5EFE0;}
+.budget-card.total .budget-val{font-size:1.75rem;color:#fff;}
+.budget-note{font-size:11px;color:#5a4a3a;margin-top:3px;}
+.budget-card.total .budget-note{color:rgba(255,255,255,0.6);}
+
+/* ── TIPS ── */
+.tips-section{margin-top:2rem;}
+.section-title{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--text);margin-bottom:1rem;}
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:11px;}
+.tip-card{background:var(--card);border-radius:11px;padding:.9rem 1.1rem;border-left:3px solid var(--terra);box-shadow:0 1px 6px var(--shadow);border:1px solid var(--border);border-left:3px solid var(--terra);}
+.tip-card.sage{border-left-color:var(--sage);}
+.tip-card.sky{border-left-color:var(--sky);}
+.tip-heading{font-weight:500;font-size:13.5px;color:var(--text);margin-bottom:4px;}
+.tip-text{font-size:12.5px;color:var(--text-soft);line-height:1.6;}
+
+/* ── TOOLS TAB ── */
+.tools-subnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:2rem;background:var(--bg2);border-radius:30px;padding:6px;border:1px solid var(--border);}
+.tools-subnav-btn{flex:1;min-width:90px;padding:8px 12px;border-radius:24px;font-size:13px;font-weight:500;border:none;background:transparent;color:var(--text-soft);transition:all .2s;text-align:center;white-space:nowrap;}
+.tools-subnav-btn:hover{color:var(--text);}
+.tools-subnav-btn.active{background:var(--card);color:var(--terra);box-shadow:0 1px 4px var(--shadow-md);}
+.tool-section{display:none;animation:fadeIn .3s ease;}
+.tool-section.active{display:block;}
+.tool-section-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--text);margin-bottom:.4rem;}
+.tool-section-sub{font-size:13px;color:var(--text-soft);margin-bottom:1.5rem;}
+
+/* ── MAP ── */
+#map{height:480px;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 12px var(--shadow);}
+.map-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:1rem;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-soft);}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+
+/* ── WEATHER ── */
+.weather-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+.wx-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:1.1rem;box-shadow:0 1px 6px var(--shadow);text-align:center;}
+.wx-city{font-weight:500;font-size:13.5px;color:var(--text);margin-bottom:2px;}
+.wx-day{font-size:11.5px;color:var(--text-soft);margin-bottom:.8rem;}
+.wx-icon{font-size:2.2rem;display:block;margin-bottom:.5rem;}
+.wx-temps{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--text);margin-bottom:.3rem;}
+.wx-temps span{font-size:.9rem;color:var(--sky);}
+.wx-desc{font-size:12px;color:var(--text-soft);}
+.wx-loading{text-align:center;padding:1.5rem;font-size:13px;color:var(--text-soft);}
+.wx-error{font-size:12px;color:var(--terra);text-align:center;padding:.5rem;}
+.wx-note{font-size:12px;color:var(--text-soft);margin-top:1rem;text-align:center;}
+
+/* ── GAS CALCULATOR ── */
+.gas-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+@media(max-width:600px){.gas-wrap{grid-template-columns:1fr;}}
+.gas-inputs{background:var(--card);border-radius:var(--radius-lg);border:1px solid var(--border);padding:1.4rem;box-shadow:0 1px 6px var(--shadow);}
+.gas-results{background:var(--card);border-radius:var(--radius-lg);border:1px solid var(--border);padding:1.4rem;box-shadow:0 1px 6px var(--shadow);}
+.gas-input-group{margin-bottom:1.1rem;}
+.gas-input-group label{display:block;font-size:12.5px;font-weight:500;color:var(--text-soft);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
+.gas-input-group input{width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border-md);background:var(--bg2);color:var(--text);font-size:15px;font-weight:500;transition:border-color .2s;outline:none;}
+.gas-input-group input:focus{border-color:var(--terra);}
+.gas-total-box{background:var(--terra);border-radius:10px;padding:1rem 1.2rem;text-align:center;margin-bottom:1.1rem;}
+.gas-total-label{font-size:11px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:.1em;}
+.gas-total-val{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:#fff;display:block;}
+.gas-sub-total{font-size:12px;color:rgba(255,255,255,0.7);}
+.gas-breakdown{margin-top:.8rem;}
+.gas-breakdown-title{font-size:12px;font-weight:500;color:var(--text-soft);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem;}
+.gas-day-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.gas-day-row:last-child{border-bottom:none;}
+.gas-day-name{color:var(--text-soft);}
+.gas-day-val{font-weight:500;color:var(--text);}
+
+/* ── PHOTO SPOTS ── */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+.photo-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:0 1px 6px var(--shadow);}
+.photo-card-top{height:8px;}
+.photo-card-body{padding:1rem 1.1rem;}
+.photo-spot-name{font-weight:500;font-size:14px;color:var(--text);margin-bottom:3px;}
+.photo-spot-day{font-size:11.5px;color:var(--text-soft);margin-bottom:.7rem;}
+.photo-what{font-size:12.5px;color:var(--text);margin-bottom:.4rem;line-height:1.5;}
+.photo-tip{display:flex;align-items:flex-start;gap:6px;font-size:12px;color:var(--text-soft);background:var(--bg2);border-radius:7px;padding:7px 9px;margin-top:.6rem;}
+.photo-tip-icon{flex-shrink:0;margin-top:1px;}
+
+/* ── CHECKLIST ── */
+.checklist-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.check-category{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:0 1px 6px var(--shadow);}
+.check-cat-header{padding:.8rem 1rem;font-weight:500;font-size:13.5px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.check-cat-count{font-size:11.5px;color:var(--text-soft);}
+.check-items{padding:.6rem .8rem;}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.check-item:last-child{border-bottom:none;}
+.check-item input[type=checkbox]{width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:var(--terra);cursor:pointer;}
+.check-item label{font-size:13px;color:var(--text);cursor:pointer;line-height:1.4;}
+.check-item.done label{text-decoration:line-through;color:var(--text-soft);}
+.check-progress-bar{height:3px;background:var(--bg3);}
+.check-progress-fill{height:3px;background:var(--terra);transition:width .3s;border-radius:0 0 0 0;}
+.checklist-actions{display:flex;gap:8px;margin-bottom:1.2rem;}
+.cl-btn{padding:7px 16px;border-radius:20px;font-size:12.5px;font-weight:500;border:1.5px solid var(--border-md);background:transparent;color:var(--text-soft);transition:all .2s;}
+.cl-btn:hover{border-color:var(--terra);color:var(--terra);}
+.cl-btn.primary{background:var(--terra);border-color:var(--terra);color:#fff;}
+.cl-btn.primary:hover{background:var(--terra-l);}
+.cl-summary{font-size:13px;color:var(--text-soft);margin-bottom:1rem;}
+.cl-summary strong{color:var(--terra);}
+
+/* ── FOOTER ── */
+footer{text-align:center;padding:2rem 1.5rem;font-size:12.5px;color:var(--text-soft);border-top:1px solid var(--border);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  body{font-size:16px;}
+  .hero{padding:2.5rem 1.2rem 2rem;}
+  .hero-stats{gap:.9rem;}
+  .budget-card.total{grid-column:span 1;}
+  .tools-subnav{border-radius:12px;}
+  .tools-subnav-btn{min-width:unset;padding:7px 8px;font-size:12px;}
+  td{padding:10px 9px;}
+  table{font-size:13px;}
+}
+@media print{
+  .hero-top,.day-nav,.main-tabs,.tools-subnav,.dm-toggle{display:none!important;}
+  .day-card.hidden,.main-tab-panel{display:block!important;}
+  .hero::before{display:none;}
+  body{font-size:12px;}
+  .budget-grid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ HERO ═══ -->
+<header class="hero">
+  <div class="hero-top" style="max-width:900px;margin:0 auto 1.5rem;position:relative;">
+    <div style="flex:1;text-align:center;">
+      <div class="hero-eyebrow">Family Road Trip · April 2026</div>
+      <h1 class="hero-title">Texas–<em>New Mexico</em><br>Loop</h1>
+      <p class="hero-subtitle">Carrollton, TX · Departing Thursday, April 9 at 3:00 PM</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="hero-stat-val">6</span><span class="hero-stat-label">Days</span></div>
+        <div class="hero-divider" style="width:1px;height:36px;background:#2e2820;align-self:center;"></div>
+        <div class="hero-stat"><span class="hero-stat-val">~1,530</span><span class="hero-stat-label">Miles</span></div>
+        <div class="hero-divider" style="width:1px;height:36px;background:#2e2820;align-self:center;"></div>
+        <div class="hero-stat"><span class="hero-stat-val">5</span><span class="hero-stat-label">Nights</span></div>
+        <div class="hero-divider" style="width:1px;height:36px;background:#2e2820;align-self:center;"></div>
+        <div class="hero-stat"><span class="hero-stat-val">~$1,150</span><span class="hero-stat-label">Est. Budget (4)</span></div>
+      </div>
+      <!-- Countdown -->
+      <div id="countdown-wrap"></div>
+    </div>
+    <button class="dm-toggle" onclick="toggleDark()" id="dm-btn">🌙 Dark mode</button>
+  </div>
+</header>
+
+<!-- ROUTE BAR -->
+<div class="route-bar">
+  <span class="route-stop home">Carrollton, TX</span><span class="route-arrow">→</span>
+  <span class="route-stop">Amarillo, TX</span><span class="route-arrow">→</span>
+  <span class="route-stop">Santa Fe, NM</span><span class="route-arrow">→</span>
+  <span class="route-stop">Albuquerque, NM</span><span class="route-arrow">→</span>
+  <span class="route-stop">White Sands, NM</span><span class="route-arrow">→</span>
+  <span class="route-stop">Roswell, NM</span><span class="route-arrow">→</span>
+  <span class="route-stop home">Carrollton, TX</span>
+</div>
+
+<div class="outer">
+
+  <!-- MAIN TAB NAV -->
+  <nav class="main-tabs">
+    <button class="main-tab-btn active" onclick="switchMainTab('itinerary',this)">📋 Itinerary</button>
+    <button class="main-tab-btn" onclick="switchMainTab('tools',this)">🛠 Trip Tools</button>
+  </nav>
+
+  <!-- ════════════════════════════════════════
+       ITINERARY TAB
+  ════════════════════════════════════════ -->
+  <div class="main-tab-panel active" id="tab-itinerary">
+
+    <nav class="day-nav">
+      <button class="day-btn active" onclick="filterDay('all',this)">All Days</button>
+      <button class="day-btn" onclick="filterDay('1',this)">Day 1 · Thu</button>
+      <button class="day-btn" onclick="filterDay('2',this)">Day 2 · Fri</button>
+      <button class="day-btn" onclick="filterDay('3',this)">Day 3 · Sat</button>
+      <button class="day-btn" onclick="filterDay('4',this)">Day 4 · Sun</button>
+      <button class="day-btn" onclick="filterDay('5',this)">Day 5 · Mon</button>
+      <button class="day-btn" onclick="filterDay('6',this)">Day 6 · Tue</button>
+    </nav>
+
+    <!-- DAY 1 -->
+    <div class="day-card" data-day="1">
+      <div class="day-card-header">
+        <div class="day-number">01</div>
+        <div><div class="day-name">Thursday · Carrollton → Amarillo</div><div class="day-route-text">Depart 3:00 PM · Arrive ~8:30 PM</div></div>
+        <div class="day-badge"><span class="badge badge-drive">~370 mi · 5.5 hrs</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th class="td-time">Time</th><th class="td-loc">Location & Attraction</th><th>Description</th><th class="td-drive">Drive</th><th class="td-veg">Vegetarian Dining</th><th class="td-cost">Est. Cost</th></tr></thead>
+        <tbody>
+          <tr><td class="td-time"><span class="time-pill tp-afternoon">3:00 PM</span></td><td class="td-loc"><div class="loc-name">Depart Carrollton, TX</div><div class="loc-sub">Start of the adventure</div></td><td>Hit I-40 W toward Amarillo. Pack drinks, snacks, a playlist. Golden-hour driving through flat Texas plains is surprisingly beautiful.</td><td><span class="drive-chip">0 → 370 mi</span></td><td><div class="veg-name">Pack homemade</div><div class="veg-note">Sandwiches or grab a bite before leaving</div></td><td><div class="cost-main">~$55 gas</div><div class="cost-sub">Full tank for the day</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-afternoon">~5:30 PM</span></td><td class="td-loc"><div class="loc-name">Cadillac Ranch</div><div class="loc-sub">Amarillo, TX · Free art stop</div></td><td>Ten Cadillacs half-buried nose-first in a wheat field. Bring a can of spray paint — visitors are encouraged to add their mark. Magical at sunset.</td><td><span class="drive-chip">~2 hrs from start</span></td><td><div class="veg-name">—</div></td><td><div class="cost-main">Free</div><div class="cost-sub">Spray paint ~$2 optional</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-evening">~8:30 PM</span></td><td class="td-loc"><div class="loc-name">Arrive Amarillo — Check In</div><div class="loc-sub">Budget overnight stay</div></td><td>Check in near the historic Route 66 corridor. La Quinta and Motel 6 options are plentiful. Rest up for a full Day 2.</td><td><span class="drive-chip">~1.5 hrs from Ranch</span></td><td><div class="veg-name">Thai Palace</div><div class="veg-note">or Crush Wine Bar & Bistro — both veggie-friendly in Amarillo</div></td><td><div class="cost-main">Lodging ~$70–90</div><div class="cost-sub">Dinner ~$15–20/person</div></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- DAY 2 -->
+    <div class="day-card" data-day="2">
+      <div class="day-card-header">
+        <div class="day-number">02</div>
+        <div><div class="day-name">Friday · Amarillo → Palo Duro Canyon → Santa Fe, NM</div><div class="day-route-text">Morning canyon hike · Afternoon ghost town · Evening in Santa Fe</div></div>
+        <div class="day-badge"><span class="badge badge-drive">~5 hrs driving total</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th class="td-time">Time</th><th class="td-loc">Location & Attraction</th><th>Description</th><th class="td-drive">Drive</th><th class="td-veg">Vegetarian Dining</th><th class="td-cost">Est. Cost</th></tr></thead>
+        <tbody>
+          <tr><td class="td-time"><span class="time-pill tp-morning">8:00 AM</span></td><td class="td-loc"><div class="loc-name">Palo Duro Canyon State Park</div><div class="loc-sub">"Grand Canyon of Texas"</div></td><td>Second-largest canyon in the US. Hike the Lighthouse Trail (~6 mi round-trip) or shorter Capitol Peak overlook for incredible red-rock vistas.</td><td><span class="drive-chip">25 min from Amarillo</span></td><td><div class="veg-name">Pack a picnic lunch</div><div class="veg-note">Trail mix, wraps & fruit from Sprouts or United supermarket</div></td><td><div class="cost-main">$8/person entry</div><div class="cost-sub">Picnic groceries ~$15</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-afternoon">12:30 PM</span></td><td class="td-loc"><div class="loc-name">Glenrio Ghost Town</div><div class="loc-sub">TX/NM border · Route 66 relic</div></td><td>Eerie abandoned town on the Texas–NM border. Old motels, crumbling diner, the famous "first/last" service station on Route 66. Excellent quirky photo stop.</td><td><span class="drive-chip">~1 hr from Palo Duro</span></td><td><div class="veg-name">—</div></td><td><div class="cost-main">Free</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-afternoon">4:30 PM</span></td><td class="td-loc"><div class="loc-name">Arrive Santa Fe, NM</div><div class="loc-sub">Check in + Plaza stroll</div></td><td>Check in near historic downtown. Stroll the Santa Fe Plaza, browse the Palace of the Governors portal market. Evening galleries, adobe architecture, cool mountain air.</td><td><span class="drive-chip">~3.5 hrs from Glenrio</span></td><td><div class="veg-name">Vinaigrette</div><div class="veg-note">Santa Fe's beloved 100% vegetarian-forward salad bistro. Or Paloma for excellent veggie menus.</div></td><td><div class="cost-main">Lodging ~$80–110</div><div class="cost-sub">Dinner ~$15–25/person</div></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- DAY 3 -->
+    <div class="day-card" data-day="3">
+      <div class="day-card-header">
+        <div class="day-number">03</div>
+        <div><div class="day-name">Saturday · Santa Fe (full day) → Albuquerque</div><div class="day-route-text">Meow Wolf · Canyon Road · Turquoise Trail · Old Town ABQ</div></div>
+        <div class="day-badge"><span class="badge badge-drive">~1–1.5 hrs driving</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th class="td-time">Time</th><th class="td-loc">Location & Attraction</th><th>Description</th><th class="td-drive">Drive</th><th class="td-veg">Vegetarian Dining</th><th class="td-cost">Est. Cost</th></tr></thead>
+        <tbody>
+          <tr><td class="td-time"><span class="time-pill tp-morning">9:00 AM</span></td><td class="td-loc"><div class="loc-name">Meow Wolf</div><div class="loc-sub">House of Eternal Return</div></td><td>A surrealist, interactive labyrinth inside a Victorian house where physics doesn't apply. Kids and adults equally obsessed. Book tickets online in advance!</td><td><span class="drive-chip">5 min from Plaza</span></td><td><div class="veg-name">Café Pasqual's</div><div class="veg-note">Legendary Santa Fe brunch. Go before Meow Wolf — worth the line.</div></td><td><div class="cost-main">$30–38/adult · ~$25 kids</div><div class="cost-sub">Breakfast ~$12/person</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-afternoon">12:30 PM</span></td><td class="td-loc"><div class="loc-name">Canyon Road Galleries</div><div class="loc-sub">Santa Fe arts district</div></td><td>Walk the mile-long Canyon Road lined with 100+ galleries and sculpture gardens. Free to browse. Hidden gem: Cristo Rey Church and acequia canal path.</td><td><span class="drive-chip">10 min walk from Plaza</span></td><td><div class="veg-name">Railyard Farmers Market</div><div class="veg-note">Saturdays only! Cheap bean/cheese green chile tacos. Or Upper Crust Pizza for veggie pies.</div></td><td><div class="cost-main">Free to browse</div><div class="cost-sub">Lunch ~$10–14/person</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-afternoon">3:30 PM</span></td><td class="td-loc"><div class="loc-name">Turquoise Trail → Madrid, NM</div><div class="loc-sub">Scenic Route NM-14 detour</div></td><td>Skip the interstate — wind through Madrid, NM, a quirky artist colony of ~300 residents with colorful storefronts and an old coal mine. Unforgettable 30-minute detour.</td><td><span class="drive-chip">~1–1.5 hrs to ABQ</span></td><td><div class="veg-name">—</div></td><td><div class="cost-main">~$10 gas</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-evening">6:00 PM</span></td><td class="td-loc"><div class="loc-name">Arrive Albuquerque</div><div class="loc-sub">Old Town + check in</div></td><td>Check in near Old Town or Nob Hill. Easy evening stroll through the historic Old Town Plaza — beautiful adobe architecture and string lights at dusk.</td><td><span class="drive-chip">arrive</span></td><td><div class="veg-name">Flying Star Café</div><div class="veg-note">Beloved local chain, extensive veggie menu. Very family-friendly. Or Zacatecas Tacos for great veggie options in Nob Hill.</div></td><td><div class="cost-main">Lodging ~$75–100</div><div class="cost-sub">Dinner ~$12–18/person</div></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- DAY 4 -->
+    <div class="day-card" data-day="4">
+      <div class="day-card-header">
+        <div class="day-number">04</div>
+        <div><div class="day-name">Sunday · Albuquerque → White Sands → Alamogordo, NM</div><div class="day-route-text">Petroglyphs · Long scenic drive south · White Sands at golden hour</div></div>
+        <div class="day-badge"><span class="badge badge-drive">~4 hrs driving total</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th class="td-time">Time</th><th class="td-loc">Location & Attraction</th><th>Description</th><th class="td-drive">Drive</th><th class="td-veg">Vegetarian Dining</th><th class="td-cost">Est. Cost</th></tr></thead>
+        <tbody>
+          <tr><td class="td-time"><span class="time-pill tp-morning">7:30 AM</span></td><td class="td-loc"><div class="loc-name">Petroglyph National Monument</div><div class="loc-sub">Optional quick morning stop</div></td><td>Walk the Boca Negra loop in 30 minutes to see 400 ancient rock carvings. Totally free and fascinating. Or skip for more time at White Sands.</td><td><span class="drive-chip">15 min from hotels</span></td><td><div class="veg-name">NM breakfast burrito</div><div class="veg-note">Bean/egg/cheese from Weck's Diner — NM burritos are on another level.</div></td><td><div class="cost-main">$2/car</div><div class="cost-sub">Breakfast ~$8–12/person</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-morning">9:00 AM</span></td><td class="td-loc"><div class="loc-name">Drive to White Sands</div><div class="loc-sub">I-25 S → US-70 W · 220 mi</div></td><td>High-desert drive through the Tularosa Basin. The Very Large Array radio telescopes are visible from the highway. Pack the cooler — no food inside the park.</td><td><span class="drive-chip">~3.5 hrs · 220 mi</span></td><td><div class="veg-name">Pack a cooler — essential</div><div class="veg-note">Wraps, hummus, fruit & lots of water. Nothing available in the park.</div></td><td><div class="cost-main">~$35 gas</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-afternoon">12:30 PM</span></td><td class="td-loc"><div class="loc-name">White Sands National Park</div><div class="loc-sub">World's largest gypsum dune field</div></td><td>Pure white sand dunes as far as you can see. Rent plastic disc sleds at the visitor center. Walk Alkali Flat (~5 mi) or Playa Trail (~1 mi for kids). Stay for golden hour.</td><td><span class="drive-chip">arrive — explore 3+ hrs</span></td><td><div class="veg-name">Picnic on the dunes</div><div class="veg-note">Check for free ranger-led sunset strolls on select evenings.</div></td><td><div class="cost-main">$25/vehicle entry</div><div class="cost-sub">Sled rental ~$3/hr</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-evening">6:30 PM</span></td><td class="td-loc"><div class="loc-name">Alamogordo, NM — Overnight</div><div class="loc-sub">15 min from park gate</div></td><td>Budget motels are plentiful and cheap here. Optional: NM Museum of Space History ($6) if arriving early enough.</td><td><span class="drive-chip">15 min from park</span></td><td><div class="veg-name">Ramona's Mexican Food</div><div class="veg-note">Bean burritos & veggie enchiladas — classic NM comfort food, incredibly affordable.</div></td><td><div class="cost-main">Lodging ~$65–85</div><div class="cost-sub">Dinner ~$10–15/person</div></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- DAY 5 -->
+    <div class="day-card" data-day="5">
+      <div class="day-card-header">
+        <div class="day-number">05</div>
+        <div><div class="day-name">Monday · Alamogordo → Ruidoso → Lincoln → Roswell</div><div class="day-route-text">Mountain pass · Alpine town · Billy the Kid ghost town · UFO capital overnight</div></div>
+        <div class="day-badge"><span class="badge badge-revised">Revised · relaxed</span><span class="badge badge-drive">~3 hrs driving</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th class="td-time">Time</th><th class="td-loc">Location & Attraction</th><th>Description</th><th class="td-drive">Drive</th><th class="td-veg">Vegetarian Dining</th><th class="td-cost">Est. Cost</th></tr></thead>
+        <tbody>
+          <tr><td class="td-time"><span class="time-pill tp-morning">8:30 AM</span></td><td class="td-loc"><div class="loc-name">Depart Alamogordo</div><div class="loc-sub">US-70 E through Sacramento Mtns</div></td><td>No rush this morning. The mountain pass through Lincoln National Forest is one of the most scenic drives in NM — pine forests, cool air, dramatic elevation after days of desert.</td><td><span class="drive-chip">0 → start</span></td><td><div class="veg-name">Motel breakfast</div><div class="veg-note">Or a quick stop in town before heading up into the mountains.</div></td><td><div class="cost-main">~$10 gas</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-morning">10:00 AM</span></td><td class="td-loc"><div class="loc-name">Ruidoso, NM</div><div class="loc-sub">Alpine mountain resort town</div></td><td>Charming mountain town. Stroll Sudderth Drive, browse indie shops. The Inn of the Mountain Gods area has a beautiful lakeside view — free to walk around.</td><td><span class="drive-chip">~1 hr from Alamogordo</span></td><td><div class="veg-name">Casa Blanca Restaurant</div><div class="veg-note">Beloved local spot, fantastic bean & green chile breakfast burritos. Very affordable.</div></td><td><div class="cost-main">Free to explore</div><div class="cost-sub">Breakfast ~$9–12/person</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-afternoon">12:00 PM</span></td><td class="td-loc"><div class="loc-name">Lincoln, NM</div><div class="loc-sub">Hidden gem — entire village is a state monument</div></td><td>The whole main street looks exactly as it did in 1881. Billy the Kid's jailbreak happened in the Lincoln County Courthouse — you can stand in that exact room. Free to walk the street; museum ~$7.</td><td><span class="drive-chip">~30 min from Ruidoso</span></td><td><div class="veg-name">Picnic at the church</div><div class="veg-note">Grab food in Ruidoso and eat at the shaded tables near the historic San Juan Church.</div></td><td><div class="cost-main">Museum ~$7/adult</div><div class="cost-sub">Free to walk the street</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-afternoon">2:30 PM</span></td><td class="td-loc"><div class="loc-name">Arrive Roswell, NM</div><div class="loc-sub">UFO Museum + overnight</div></td><td>Check in early (budget motels are cheap here). Hit the International UFO Museum — gloriously kitschy and only $5. Alien street art, shops, and weird energy. Done by 5 PM with energy to spare.</td><td><span class="drive-chip">~1.5 hrs from Lincoln</span></td><td><div class="veg-name">Martin's Capitol Café</div><div class="veg-note">Longtime institution. Bean enchiladas, veggie tamales, green chile. Extremely cheap. Or Farley's Food Pub for casual veggie options.</div></td><td><div class="cost-main">Lodging ~$65–80</div><div class="cost-sub">UFO Museum ~$5/person · Dinner ~$10–14/person</div></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- DAY 6 -->
+    <div class="day-card" data-day="6">
+      <div class="day-card-header">
+        <div class="day-number">06</div>
+        <div><div class="day-name">Tuesday · Roswell → Carrollton, TX</div><div class="day-route-text">Easy return leg · Home by early afternoon</div></div>
+        <div class="day-badge"><span class="badge badge-new">New day added</span><span class="badge badge-drive">~5.5 hrs straight shot</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th class="td-time">Time</th><th class="td-loc">Location & Attraction</th><th>Description</th><th class="td-drive">Drive</th><th class="td-veg">Vegetarian Dining</th><th class="td-cost">Est. Cost</th></tr></thead>
+        <tbody>
+          <tr><td class="td-time"><span class="time-pill tp-morning">8:00 AM</span></td><td class="td-loc"><div class="loc-name">Depart Roswell</div><div class="loc-sub">US-380 E → I-20 E → I-35 N</div></td><td>Clean eastward drive across the Permian Basin. Flat, fast, stress-free. No mountain passes, no tricky roads. Big Texas sky, podcast, cruise control.</td><td><span class="drive-chip">0 → 390 mi</span></td><td><div class="veg-name">Coffee in Roswell</div><div class="veg-note">Grab a quick breakfast before hitting the road.</div></td><td><div class="cost-main">~$55 gas</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-morning">10:30 AM</span></td><td class="td-loc"><div class="loc-name">Midland / Odessa, TX</div><div class="loc-sub">Halfway fuel & stretch stop</div></td><td>Refuel, stretch, grab snacks. Pure logistics — nothing unmissable here. This is the long plains crossing.</td><td><span class="drive-chip">~2.5 hrs from Roswell</span></td><td><div class="veg-name">HEB or Walmart Supercenter</div><div class="veg-note">Fresh snacks, wraps, deli items for the road.</div></td><td><div class="cost-main">~$10 gas + snacks</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-afternoon">1:30 PM</span></td><td class="td-loc"><div class="loc-name">Optional: Abilene, TX lunch stop</div><div class="loc-sub">Or push straight to DFW</div></td><td>Natural lunch stop if you want to break the drive. Or push home and celebrate with a proper dinner in Fort Worth or Carrollton.</td><td><span class="drive-chip">~3 hrs from Midland</span></td><td><div class="veg-name">Spiral Diner & Bakery</div><div class="veg-note">Fort Worth's legendary 100% vegan diner. Perfect celebration dinner back home.</div></td><td><div class="cost-main">Lunch ~$10–15/person</div></td></tr>
+          <tr><td class="td-time"><span class="time-pill tp-afternoon">2:00–3:00 PM</span></td><td class="td-loc"><div class="loc-name">🎉 Arrive Carrollton, TX</div><div class="loc-sub">Trip complete!</div></td><td>Home by mid-afternoon — no Sunday-night scramble, no exhausted evening arrival. Plenty of time to unpack and relive the best moments.</td><td><span class="drive-chip">trip complete</span></td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- BUDGET -->
+    <div class="budget-section">
+      <div class="budget-title">Estimated Trip Budget — Family of 4</div>
+      <div class="budget-grid">
+        <div class="budget-card"><div class="budget-label">Gas (total)</div><div class="budget-val">~$220</div><div class="budget-note">~1,530 mi · 28 mpg · $3.50/gal</div></div>
+        <div class="budget-card"><div class="budget-label">Lodging (5 nights)</div><div class="budget-val">~$390</div><div class="budget-note">$65–110/night avg</div></div>
+        <div class="budget-card"><div class="budget-label">Entry Fees</div><div class="budget-val">~$150</div><div class="budget-note">Parks, Meow Wolf, museums</div></div>
+        <div class="budget-card"><div class="budget-label">Dining (4 people)</div><div class="budget-val">~$340</div><div class="budget-note">~$15/meal avg, mix of picnics</div></div>
+        <div class="budget-card total"><div class="budget-label">Total Estimate</div><div class="budget-val">~$1,050–1,200</div><div class="budget-note">For a family of 4 · 6 days · all-in</div></div>
+      </div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="tips-section" style="margin-top:2rem;">
+      <div class="section-title">Essential Trip Tips</div>
+      <div class="tips-grid">
+        <div class="tip-card"><div class="tip-heading">Book Meow Wolf ahead of time</div><div class="tip-text">Saturday tickets sell out. Purchase online before you leave Carrollton — it's the biggest splurge and worth every penny.</div></div>
+        <div class="tip-card sage"><div class="tip-heading">Pack a cooler for White Sands</div><div class="tip-text">Nothing to buy inside the park. Water, wraps, hummus, and fruit are non-negotiable. NM sun is intense — pack more water than you think you need.</div></div>
+        <div class="tip-card sky"><div class="tip-heading">White Sands missile range closures</div><div class="tip-text">US-70 occasionally closes 1–2 hrs for missile tests. Check the park's website the morning of Day 4 for any scheduled closures.</div></div>
+        <div class="tip-card"><div class="tip-heading">Ask "Red or Green?" in NM</div><div class="tip-text">It refers to the chile sauce at every NM restaurant. Green is milder, red is earthier. Say "Christmas" to get both. Most dishes adapt easily to vegetarian.</div></div>
+        <div class="tip-card sage"><div class="tip-heading">Don't skip the Turquoise Trail</div><div class="tip-text">The Madrid, NM detour on Day 3 adds only 30 minutes but is one of the most memorable stretches of the entire trip.</div></div>
+        <div class="tip-card sky"><div class="tip-heading">Saturday Railyard Market in Santa Fe</div><div class="tip-text">Day 3 falls perfectly on a Saturday. Railyard Farmers Market runs 8 AM–1 PM with excellent cheap vegetarian street food.</div></div>
+      </div>
+    </div>
+
+  </div><!-- end itinerary tab -->
+
+  <!-- ════════════════════════════════════════
+       TRIP TOOLS TAB
+  ════════════════════════════════════════ -->
+  <div class="main-tab-panel" id="tab-tools">
+
+    <!-- Sub-nav within tools -->
+    <div class="tools-subnav">
+      <button class="tools-subnav-btn active" onclick="switchTool('map',this)">🗺 Route Map</button>
+      <button class="tools-subnav-btn" onclick="switchTool('weather',this)">🌤 Weather</button>
+      <button class="tools-subnav-btn" onclick="switchTool('gas',this)">⛽ Gas Calc</button>
+      <button class="tools-subnav-btn" onclick="switchTool('photos',this)">📸 Photo Spots</button>
+      <button class="tools-subnav-btn" onclick="switchTool('checklist',this)">✓ Packing List</button>
+    </div>
+
+    <!-- MAP -->
+    <div class="tool-section active" id="tool-map">
+      <div class="tool-section-title">Interactive Route Map</div>
+      <div class="tool-section-sub">Click any marker for stop details. Color-coded by day.</div>
+      <div id="map"></div>
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#E07A52;"></div>Day 1 · Thu</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#7B68EE;"></div>Day 2 · Fri</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4CAF50;"></div>Day 3 · Sat</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4A7FA5;"></div>Day 4 · Sun</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#E63946;"></div>Day 5 · Mon</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#26A69A;"></div>Day 6 · Tue (return)</div>
+      </div>
+    </div>
+
+    <!-- WEATHER -->
+    <div class="tool-section" id="tool-weather">
+      <div class="tool-section-title">Weather Forecast Along the Route</div>
+      <div class="tool-section-sub">Live forecast from Open-Meteo (requires internet). Fetching your trip dates: April 9–14, 2026.</div>
+      <div class="weather-grid" id="weather-grid">
+        <div class="wx-loading">Fetching forecasts... 🌍</div>
+      </div>
+      <div class="wx-note">Data from <a href="https://open-meteo.com" target="_blank">Open-Meteo</a> · Free & no API key required · Forecasts may vary</div>
+    </div>
+
+    <!-- GAS CALCULATOR -->
+    <div class="tool-section" id="tool-gas">
+      <div class="tool-section-title">Gas Cost Calculator</div>
+      <div class="tool-section-sub">Enter your car's MPG and today's gas price to get a real estimate for your vehicle.</div>
+      <div class="gas-wrap">
+        <div class="gas-inputs">
+          <div class="gas-input-group">
+            <label>Your car's MPG</label>
+            <input type="number" id="gas-mpg" value="28" min="10" max="80" step="1" oninput="calcGas()">
+          </div>
+          <div class="gas-input-group">
+            <label>Gas price ($/gallon)</label>
+            <input type="number" id="gas-price" value="3.50" min="2" max="8" step="0.01" oninput="calcGas()">
+          </div>
+          <div class="gas-input-group">
+            <label>Total trip miles</label>
+            <input type="number" id="gas-miles" value="1530" min="500" max="5000" step="10" oninput="calcGas()">
+          </div>
+          <div style="font-size:12px;color:var(--text-soft);margin-top:.5rem;">Tip: Check your dashboard for current MPG or look up your car's combined fuel economy at fueleconomy.gov</div>
+        </div>
+        <div class="gas-results">
+          <div class="gas-total-box">
+            <div class="gas-total-label">Estimated Total Gas Cost</div>
+            <span class="gas-total-val" id="gas-total-cost">$191</span>
+            <div class="gas-sub-total" id="gas-gallons-needed">~54.6 gallons needed</div>
+          </div>
+          <div class="gas-breakdown">
+            <div class="gas-breakdown-title">Per-Day Breakdown</div>
+            <div id="gas-breakdown-rows"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHOTO SPOTS -->
+    <div class="tool-section" id="tool-photos">
+      <div class="tool-section-title">Best Photo & Instagram Spots</div>
+      <div class="tool-section-sub">The most visually striking stops on the route, with timing tips for the best light.</div>
+      <div class="photo-grid" id="photo-grid"></div>
+    </div>
+
+    <!-- PACKING CHECKLIST -->
+    <div class="tool-section" id="tool-checklist">
+      <div class="tool-section-title">Packing Checklist</div>
+      <div class="tool-section-sub">Check items off as you pack. Progress is saved in your browser.</div>
+      <div class="checklist-actions">
+        <button class="cl-btn" onclick="clearChecklist()">Reset all</button>
+        <button class="cl-btn primary" onclick="checkAll()">Check all</button>
+        <div style="margin-left:auto;align-self:center;" class="cl-summary" id="cl-summary">Loading...</div>
+      </div>
+      <div class="checklist-wrap" id="checklist-wrap"></div>
+    </div>
+
+  </div><!-- end tools tab -->
+
+</div><!-- end outer -->
+
+<footer>
+  <p>Texas–New Mexico Family Road Trip · 2026 · Made with Claude &nbsp;·&nbsp; Open locally in any browser &nbsp;·&nbsp; <a href="#" onclick="window.print();return false;">Print itinerary</a></p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─── DARK MODE ───
+function toggleDark(){
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme', isDark?'light':'dark');
+  document.getElementById('dm-btn').textContent = isDark ? '🌙 Dark mode' : '☀️ Light mode';
+  localStorage.setItem('rt-theme', isDark?'light':'dark');
+  if(window._leafletMap) {
+    window._darkTiles.remove();
+    window._lightTiles.remove();
+    if(!isDark){window._darkTiles.addTo(window._leafletMap);}
+    else{window._lightTiles.addTo(window._leafletMap);}
+  }
+}
+(function(){
+  const saved = localStorage.getItem('rt-theme');
+  if(saved){
+    document.documentElement.setAttribute('data-theme',saved);
+    if(saved==='dark') setTimeout(()=>{ const b=document.getElementById('dm-btn'); if(b) b.textContent='☀️ Light mode'; },0);
+  }
+})();
+
+// ─── COUNTDOWN ───
+(function(){
+  const departure = new Date(2026,3,9,15,0,0); // April 9 2026 3PM local
+  const wrap = document.getElementById('countdown-wrap');
+  function render(){
+    const now = new Date();
+    const diff = departure - now;
+    if(diff<=0){
+      wrap.innerHTML='<div class="cd-done">🚗 The adventure has begun — enjoy the road!</div>';
+      return;
+    }
+    const d = Math.floor(diff/86400000);
+    const h = Math.floor((diff%86400000)/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    wrap.innerHTML=`<div class="countdown">
+      <div class="cd-unit"><span class="cd-num">${d}</span><span class="cd-label">Days</span></div>
+      <span class="cd-sep">:</span>
+      <div class="cd-unit"><span class="cd-num">${String(h).padStart(2,'0')}</span><span class="cd-label">Hours</span></div>
+      <span class="cd-sep">:</span>
+      <div class="cd-unit"><span class="cd-num">${String(m).padStart(2,'0')}</span><span class="cd-label">Min</span></div>
+      <span class="cd-sep">:</span>
+      <div class="cd-unit"><span class="cd-num">${String(s).padStart(2,'0')}</span><span class="cd-label">Sec</span></div>
+    </div><div style="font-size:11px;color:#5a4a3a;margin-top:8px;letter-spacing:.08em;text-transform:uppercase;">Until departure · Thu Apr 9, 2026 at 3:00 PM</div>`;
+  }
+  render();
+  setInterval(render,1000);
+})();
+
+// ─── MAIN TABS ───
+function switchMainTab(name, btn){
+  document.querySelectorAll('.main-tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.main-tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='tools'){
+    setTimeout(()=>{ if(window._leafletMap) window._leafletMap.invalidateSize(); }, 150);
+    if(!window._weatherLoaded){ loadWeather(); window._weatherLoaded=true; }
+  }
+}
+
+// ─── DAY FILTER ───
+function filterDay(day, btn){
+  document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.day-card').forEach(c=>{
+    const match = day==='all' || c.dataset.day===day;
+    c.classList.toggle('hidden',!match);
+    if(match){ c.style.animation='none'; c.offsetHeight; c.style.animation='fadeUp .35s ease both'; }
+  });
+}
+
+// ─── TOOLS SUBNAV ───
+function switchTool(name, btn){
+  document.querySelectorAll('.tools-subnav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tool-section').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tool-'+name).classList.add('active');
+  if(name==='map') setTimeout(()=>{ if(window._leafletMap) window._leafletMap.invalidateSize(); },100);
+  if(name==='weather' && !window._weatherLoaded){ loadWeather(); window._weatherLoaded=true; }
+}
+
+// ─── MAP ───
+(function(){
+  document.addEventListener('DOMContentLoaded', function(){
+    const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+    const map = L.map('map',{zoomControl:true,scrollWheelZoom:false}).setView([34.0,-103.5],6);
+    window._leafletMap = map;
+
+    const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19});
+    const darkTiles  = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19});
+    window._lightTiles = lightTiles;
+    window._darkTiles = darkTiles;
+    (isDark ? lightTiles : darkTiles).addTo(map);
+
+    // Route segments by day [lat,lng]
+    const routes = [
+      { day:1, color:'#E07A52', coords:[[32.9537,-96.8903],[32.7555,-97.3308],[33.2148,-97.6330],[33.9137,-98.4934],[34.4265,-100.2177],[35.2220,-101.8313]] },
+      { day:2, color:'#7B68EE', coords:[[35.2220,-101.8313],[34.9312,-101.6552],[35.2220,-101.8313],[35.1766,-103.0285],[35.1731,-103.7244],[35.5281,-105.0228],[35.6870,-105.9378]] },
+      { day:3, color:'#4CAF50', coords:[[35.6870,-105.9378],[35.3932,-106.1541],[35.0844,-106.6504]] },
+      { day:4, color:'#4A7FA5', coords:[[35.0844,-106.6504],[34.4048,-106.8848],[33.1440,-107.2553],[32.9001,-105.9603],[32.7872,-106.3259],[32.9001,-105.9603]] },
+      { day:5, color:'#E63946', coords:[[32.9001,-105.9603],[33.3315,-105.6574],[33.5012,-105.3771],[33.3943,-104.5230]] },
+      { day:6, color:'#26A69A', coords:[[33.3943,-104.5230],[31.9974,-102.0779],[32.4487,-99.7331],[32.7490,-97.3301],[32.9537,-96.8903]] }
+    ];
+    routes.forEach(r=>{
+      L.polyline(r.coords,{color:r.color,weight:3.5,opacity:.85,dashArray:r.day===6?'6 4':null}).addTo(map);
+    });
+
+    // Markers
+    const stops = [
+      { lat:32.9537,lng:-96.8903, label:'Carrollton, TX', note:'Start & End of trip', day:'Home', color:'#C4623A' },
+      { lat:35.1766,lng:-101.9924, label:'Cadillac Ranch', note:'Day 1 · Free art stop · Bring spray paint!', day:'Day 1', color:'#E07A52' },
+      { lat:35.2220,lng:-101.8313, label:'Amarillo, TX', note:'Day 1 overnight · Thai Palace for dinner', day:'Day 1', color:'#E07A52' },
+      { lat:34.9312,lng:-101.6552, label:'Palo Duro Canyon', note:'Day 2 · "Grand Canyon of TX" · $8/person', day:'Day 2', color:'#7B68EE' },
+      { lat:35.1766,lng:-103.0285, label:'Glenrio Ghost Town', note:'Day 2 · Abandoned Route 66 town · Free', day:'Day 2', color:'#7B68EE' },
+      { lat:35.6870,lng:-105.9378, label:'Santa Fe, NM', note:'Day 2–3 · Meow Wolf, Canyon Road, Vinaigrette', day:'Day 2–3', color:'#7B68EE' },
+      { lat:35.3932,lng:-106.1541, label:'Madrid, NM', note:'Day 3 · Quirky artist colony on Turquoise Trail', day:'Day 3', color:'#4CAF50' },
+      { lat:35.0844,lng:-106.6504, label:'Albuquerque, NM', note:'Day 3 overnight · Old Town, Flying Star Café', day:'Day 3', color:'#4CAF50' },
+      { lat:32.7872,lng:-106.3259, label:'White Sands NP', note:'Day 4 · Sled on white gypsum dunes · $25/vehicle', day:'Day 4', color:'#4A7FA5' },
+      { lat:32.9001,lng:-105.9603, label:'Alamogordo, NM', note:'Day 4 overnight · Ramona\'s Mexican Food', day:'Day 4', color:'#4A7FA5' },
+      { lat:33.3315,lng:-105.6574, label:'Ruidoso, NM', note:'Day 5 · Alpine mountain town', day:'Day 5', color:'#E63946' },
+      { lat:33.5012,lng:-105.3771, label:'Lincoln, NM', note:'Day 5 · Billy the Kid\'s jailbreak site · Free to walk', day:'Day 5', color:'#E63946' },
+      { lat:33.3943,lng:-104.5230, label:'Roswell, NM', note:'Day 5 overnight · UFO Museum $5 · Martin\'s Café', day:'Day 5', color:'#E63946' },
+      { lat:31.9974,lng:-102.0779, label:'Midland / Odessa, TX', note:'Day 6 · Fuel & stretch stop', day:'Day 6', color:'#26A69A' },
+    ];
+    stops.forEach((s,i)=>{
+      const icon = L.divIcon({
+        html:`<div style="background:${s.color};color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);">${s.label==='Carrollton, TX'?'🏠':i}</div>`,
+        className:'',iconSize:[28,28],iconAnchor:[14,14]
+      });
+      L.marker([s.lat,s.lng],{icon}).bindPopup(`<strong style="font-size:13px;">${s.label}</strong><br><span style="font-size:12px;color:#666;">${s.note}</span>`).addTo(map);
+    });
+  });
+})();
+
+// ─── WEATHER ───
+function wxIcon(code){
+  if(code===0) return{icon:'☀️',label:'Clear sky'};
+  if(code<=3)  return{icon:'⛅',label:'Partly cloudy'};
+  if(code<=48) return{icon:'🌫️',label:'Foggy'};
+  if(code<=67) return{icon:'🌧️',label:'Rainy'};
+  if(code<=77) return{icon:'❄️',label:'Snow'};
+  if(code<=82) return{icon:'🌦️',label:'Showers'};
+  return{icon:'⛈️',label:'Thunderstorm'};
+}
+async function loadWeather(){
+  const cities=[
+    {name:'Amarillo, TX',     day:'Day 1–2 · Apr 9',  lat:35.22, lon:-101.83, date:'2026-04-09'},
+    {name:'Santa Fe, NM',     day:'Day 2–3 · Apr 10', lat:35.69, lon:-105.94, date:'2026-04-10'},
+    {name:'Albuquerque, NM',  day:'Day 3 · Apr 11',   lat:35.08, lon:-106.65, date:'2026-04-11'},
+    {name:'White Sands, NM',  day:'Day 4 · Apr 12',   lat:32.79, lon:-106.33, date:'2026-04-12'},
+    {name:'Roswell, NM',      day:'Day 5 · Apr 13',   lat:33.39, lon:-104.52, date:'2026-04-13'},
+  ];
+  const grid = document.getElementById('weather-grid');
+  try {
+    const results = await Promise.all(cities.map(async c=>{
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&temperature_unit=fahrenheit&timezone=America%2FChicago&start_date=${c.date}&end_date=${c.date}`;
+      const r = await fetch(url);
+      const d = await r.json();
+      return{...c, max:Math.round(d.daily.temperature_2m_max[0]), min:Math.round(d.daily.temperature_2m_min[0]), code:d.daily.weathercode[0]};
+    }));
+    grid.innerHTML = results.map(c=>{
+      const w=wxIcon(c.code);
+      return`<div class="wx-card">
+        <div class="wx-city">${c.name}</div>
+        <div class="wx-day">${c.day}</div>
+        <span class="wx-icon">${w.icon}</span>
+        <div class="wx-temps">${c.max}° <span>/ ${c.min}°F</span></div>
+        <div class="wx-desc">${w.label}</div>
+      </div>`;
+    }).join('');
+  } catch(e){
+    grid.innerHTML=`<div class="wx-error" style="grid-column:1/-1;padding:2rem;text-align:center;">
+      <div style="font-size:2rem;margin-bottom:.5rem;">🌐</div>
+      <div style="font-weight:500;margin-bottom:.3rem;">Couldn't load weather forecasts</div>
+      <div style="font-size:12px;color:var(--text-soft);">Make sure you're connected to the internet. Data comes from open-meteo.com.</div>
+    </div>`;
+  }
+}
+
+// ─── GAS CALCULATOR ───
+const dayMiles=[
+  {label:'Day 1 · Carrollton → Amarillo',mi:370},
+  {label:'Day 2 · Amarillo → Santa Fe',mi:300},
+  {label:'Day 3 · Santa Fe → Albuquerque',mi:80},
+  {label:'Day 4 · Albuquerque → Alamogordo',mi:235},
+  {label:'Day 5 · Alamogordo → Roswell',mi:155},
+  {label:'Day 6 · Roswell → Carrollton',mi:390},
+];
+function calcGas(){
+  const mpg   = parseFloat(document.getElementById('gas-mpg').value)||28;
+  const price = parseFloat(document.getElementById('gas-price').value)||3.50;
+  const total = parseFloat(document.getElementById('gas-miles').value)||1530;
+  const totalGal = total/mpg;
+  const totalCost = totalGal*price;
+  document.getElementById('gas-total-cost').textContent = '$'+totalCost.toFixed(0);
+  document.getElementById('gas-gallons-needed').textContent = '~'+totalGal.toFixed(1)+' gallons needed · '+total+' miles total';
+  // Recompute per-day based on the entered total miles proportionally
+  const rows = dayMiles.map(d=>{
+    const gal = d.mi/mpg;
+    const cost = gal*price;
+    return`<div class="gas-day-row">
+      <span class="gas-day-name">${d.label}</span>
+      <span class="gas-day-val">$${cost.toFixed(0)} <span style="font-size:11px;font-weight:400;color:var(--text-soft)">(${d.mi} mi)</span></span>
+    </div>`;
+  }).join('');
+  document.getElementById('gas-breakdown-rows').innerHTML = rows;
+}
+calcGas();
+
+// ─── PHOTO SPOTS ───
+const photoSpots = [
+  { name:'Cadillac Ranch at Sunset', day:'Day 1 · Amarillo', color:'#E07A52', what:'Ten Cadillacs buried nose-first in a wheat field. Spray paint them yourself then silhouette against the orange sky.', tip:'Arrive 30 min before sunset. Stand facing west with the cars behind you for dramatic silhouettes.' },
+  { name:'Palo Duro Canyon — Lighthouse Rock', day:'Day 2 · Amarillo', color:'#7B68EE', what:'A 300-ft red and orange sandstone pillar at the end of the Lighthouse Trail. The most iconic shot in Texas canyon country.', tip:'Morning light hits the spire best. Get there by 9 AM before it gets crowded.' },
+  { name:'Glenrio Ghost Town', day:'Day 2 · TX/NM Border', color:'#7B68EE', what:'Abandoned 1930s diner, crumbling motel, and the "first/last" service station sign. Frozen mid-century Americana.', tip:'Overcast days give the most eerie, moody photos. Check inside the old diner if accessible.' },
+  { name:'Meow Wolf Exterior', day:'Day 3 · Santa Fe', color:'#4CAF50', what:'The colorful, wild murals and sculpture on the building exterior are worth shooting before you go inside.', tip:'Morning before it opens is the quietest time for exterior shots without crowds.' },
+  { name:'Canyon Road Sculpture Gardens', day:'Day 3 · Santa Fe', color:'#4CAF50', what:'Large-scale bronze and steel sculptures in lush garden settings. Every gallery along the road has something worth photographing.', tip:'Golden hour (1 hr before sunset) makes the adobe walls and sculptures glow warm orange.' },
+  { name:'White Sands Dune Sledding', day:'Day 4 · White Sands NP', color:'#4A7FA5', what:'Action shots of kids sledding down pure white gypsum dunes under a deep blue New Mexico sky. No filter needed.', tip:'Late afternoon (3–5 PM) light casts long shadows across the dunes. Magic hour here is unreal.' },
+  { name:'White Sands Barefoot Walk', day:'Day 4 · White Sands NP', color:'#4A7FA5', what:'Lone footprints in brilliant white sand with nothing but sky. One of the most minimalist, striking landscapes in North America.', tip:'Walk at least 500m from the parking area to get completely empty dune shots with no other visitors.' },
+  { name:'Lincoln Historic Site — Main Street', day:'Day 5 · Lincoln, NM', color:'#E63946', what:'The entire 1880s village looks untouched. Adobe buildings, old wooden signs, dusty street. An entire era frozen in place.', tip:'Mid-morning when the light is soft but the street is still quiet. Walk slowly and look for details.' },
+  { name:'Roswell Alien Statues & Street Art', day:'Day 5 · Roswell', color:'#E63946', what:'Green alien sculptures, UFO-themed storefronts, and alien murals all over downtown. Delightfully kitschy.', tip:'The alien streetlights on Main Ave are photogenic at dusk when they glow green.' },
+  { name:'Madrid, NM Colorful Storefronts', day:'Day 3 · Turquoise Trail', color:'#26A69A', what:'Wildly decorated buildings in an artist colony — old mining town turned into a parade of color, folk art, and personality.', tip:'Drive through slowly and stop whenever something catches your eye. Afternoon light is ideal.' },
+];
+(function(){
+  const grid = document.getElementById('photo-grid');
+  grid.innerHTML = photoSpots.map(p=>`
+    <div class="photo-card">
+      <div class="photo-card-top" style="background:${p.color};"></div>
+      <div class="photo-card-body">
+        <div class="photo-spot-name">${p.name}</div>
+        <div class="photo-spot-day">${p.day}</div>
+        <div class="photo-what">${p.what}</div>
+        <div class="photo-tip"><span class="photo-tip-icon">💡</span><span>${p.tip}</span></div>
+      </div>
+    </div>`).join('');
+})();
+
+// ─── PACKING CHECKLIST ───
+const checklistData = [
+  { cat:'Documents & Money', color:'#C4623A', items:['Driver\'s license & insurance card','National Parks America the Beautiful pass (saves $$ at entry)','Printed/downloaded itinerary & hotel confirmations','Cash & cards for small roadside stops','Emergency contact list'] },
+  { cat:'Car & Navigation', color:'#4A7FA5', items:['Download offline Google Maps (TX + NM) before leaving','Phone charger + car adapter / USB','Extra power bank (charged)','Sunglasses for every person','Roadside emergency kit (jumper cables, flashlight, reflectors)','Check tire pressure before departure'] },
+  { cat:'Clothing (5+ days)', color:'#6B8C6E', items:['Layers — NM mornings are cool even in April','Sun hat for White Sands (essential)','Comfortable walking shoes','One light jacket per person','Swimsuits if kids want to play in Ruidoso','Change of clothes bag easily accessible in car'] },
+  { cat:'Kids & Family', color:'#7B68EE', items:['Activity books / car games / tablet with downloaded shows','Headphones per child','First aid kit (bandaids, antihistamine, sunscreen SPF 50+)','Extra plastic bags (for sandy shoes at White Sands)','Small backpack per child for hikes','Wet wipes — lots of them'] },
+  { cat:'Vegetarian Snacks & Cooler', color:'#26A69A', items:['Cooler with ice packs','Hummus + veggie sticks (carrots, celery, peppers)','Whole grain wraps + nut butter','Trail mix with nuts, seeds & dried fruit','Plenty of water bottles (1 gal/person for White Sands day)','Granola bars & energy bites','Fresh fruit (apples, oranges, bananas)','Reusable bags & utensils'] },
+  { cat:'Camera & Memories', color:'#E07A52', items:['Camera or phone fully charged','Extra memory card or clear phone storage','Spare battery or charging cable','Tripod or phone mount for group shots'] },
+  { cat:'Health & Safety', color:'#B07C20', items:['Prescription medications (7-day supply)','Sunscreen SPF 50+ (reapply at White Sands!)','Insect repellent','Motion sickness tablets if needed','Hand sanitizer','Basic OTC meds: ibuprofen, antacid, allergy relief'] },
+];
+function renderChecklist(){
+  const saved = JSON.parse(localStorage.getItem('rt-checklist')||'{}');
+  let totalItems=0, totalDone=0;
+  const wrap = document.getElementById('checklist-wrap');
+  wrap.innerHTML = checklistData.map((cat,ci)=>{
+    const doneCount = cat.items.filter((_,ii)=>saved[`${ci}-${ii}`]).length;
+    totalItems += cat.items.length;
+    totalDone  += doneCount;
+    const pct = Math.round(doneCount/cat.items.length*100);
+    const itemsHtml = cat.items.map((item,ii)=>{
+      const key=`${ci}-${ii}`, checked=saved[key]||false;
+      return`<div class="check-item${checked?' done':''}" onclick="toggleCheck('${key}',this)">
+        <input type="checkbox" ${checked?'checked':''} onchange="event.stopPropagation();toggleCheck('${key}',this.closest('.check-item'))" id="chk-${key}">
+        <label for="chk-${key}">${item}</label>
+      </div>`;
+    }).join('');
+    return`<div class="check-category">
+      <div class="check-progress-bar"><div class="check-progress-fill" style="width:${pct}%;background:${cat.color};"></div></div>
+      <div class="check-cat-header" style="border-top:3px solid ${cat.color};">
+        <span>${cat.cat}</span>
+        <span class="check-cat-count">${doneCount}/${cat.items.length}</span>
+      </div>
+      <div class="check-items">${itemsHtml}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('cl-summary').innerHTML = `<strong>${totalDone}</strong> of ${totalItems} items packed`;
+}
+function toggleCheck(key, el){
+  const saved = JSON.parse(localStorage.getItem('rt-checklist')||'{}');
+  saved[key] = !saved[key];
+  localStorage.setItem('rt-checklist', JSON.stringify(saved));
+  renderChecklist();
+}
+function clearChecklist(){ localStorage.removeItem('rt-checklist'); renderChecklist(); }
+function checkAll(){
+  const saved={};
+  checklistData.forEach((cat,ci)=>cat.items.forEach((_,ii)=>{ saved[`${ci}-${ii}`]=true; }));
+  localStorage.setItem('rt-checklist',JSON.stringify(saved)); renderChecklist();
+}
+renderChecklist();
+</script>
+</body>
+</html>
